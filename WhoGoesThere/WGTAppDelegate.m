@@ -6,9 +6,15 @@
 //  Copyright (c) 2013 Dan Reife. All rights reserved.
 //
 
+#import <FacebookSDK/FacebookSDK.h>
 #import "WGTAppDelegate.h"
-
 #import "WGTTableViewController.h"
+#import "WGTLoginViewController.h"
+
+
+@interface WGTAppDelegate ()
+
+@end
 
 @implementation WGTAppDelegate
 
@@ -22,6 +28,11 @@
     // UINavigationController *navigationController = (UINavigationController *)self.window.rootViewController;
     // WGTTableViewController *controller = (WGTTableViewController *)navigationController.topViewController;
     // controller.managedObjectContext = self.managedObjectContext;
+    
+    // Override point for customization after application launch.
+    
+ 
+    
     return YES;
 }
 							
@@ -45,6 +56,15 @@
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    
+    // See if we have a valid token for the current state.
+    if (FBSession.activeSession.state == FBSessionStateCreatedTokenLoaded) {
+        // Yes, so just open the session (this won't display any UX).
+        [self openSession];
+    } else {
+        // No, display the login page.
+        [self showLoginView];
+    }
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
@@ -146,6 +166,86 @@
 - (NSURL *)applicationDocumentsDirectory
 {
     return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+}
+
+# pragma mark - Facebook Login
+
+- (void)showLoginView
+{
+    NSLog(@"Showing LoginView");
+    UINavigationController *nc = (UINavigationController *)self.window.rootViewController;
+    UIViewController *topViewController = nc.topViewController;
+    NSLog(@"%@",topViewController);
+    UIViewController *presentedViewController = [topViewController presentedViewController];
+    
+    // If the login screen is not already displayed, display it. If the login screen is
+    // displayed, then getting back here means the login in progress did not successfully
+    // complete. In that case, notify the login view so it can update its UI appropriately.
+    if (![presentedViewController isKindOfClass:[WGTLoginViewController class]]) {
+        UIStoryboard *sb = self.window.rootViewController.storyboard;
+        WGTLoginViewController* loginViewController = (WGTLoginViewController *) [sb instantiateViewControllerWithIdentifier:@"FBLoginVC"];
+        [topViewController presentViewController:loginViewController animated:NO completion:nil];
+    } else {
+        WGTLoginViewController* loginViewController = (WGTLoginViewController*)presentedViewController;
+        [loginViewController loginFailed];
+    }
+}
+
+- (void)sessionStateChanged:(FBSession *)session
+                      state:(FBSessionState) state
+                      error:(NSError *)error
+{
+    switch (state) {
+        case FBSessionStateOpen: {
+            UIViewController *topViewController = self.window.rootViewController.navigationController.topViewController;
+            if ([[topViewController presentedViewController] // *** instead of modalViewController
+                 isKindOfClass:[WGTLoginViewController class]]) {
+                [topViewController dismissViewControllerAnimated:YES completion:nil]; // *** instead of dismissModalViewControllerAnimated
+            }
+        }
+            break;
+        case FBSessionStateClosed:
+        case FBSessionStateClosedLoginFailed:
+            // Once the user has logged in, we want them to
+            // be looking at the root view.
+            [self.window.rootViewController.navigationController popToRootViewControllerAnimated:NO];
+            
+            [FBSession.activeSession closeAndClearTokenInformation];
+            
+            [self showLoginView];
+            break;
+        default:
+            break;
+    }
+    
+    if (error) {
+        UIAlertView *alertView = [[UIAlertView alloc]
+                                  initWithTitle:@"Error"
+                                  message:error.localizedDescription
+                                  delegate:nil
+                                  cancelButtonTitle:@"OK"
+                                  otherButtonTitles:nil];
+        [alertView show];
+    }
+}
+
+- (void)openSession
+{
+    [FBSession openActiveSessionWithReadPermissions:nil
+                                       allowLoginUI:YES
+                                  completionHandler:
+     ^(FBSession *session,
+       FBSessionState state, NSError *error) {
+         [self sessionStateChanged:session state:state error:error];
+     }];
+}
+
+- (BOOL)application:(UIApplication *)application
+            openURL:(NSURL *)url
+  sourceApplication:(NSString *)sourceApplication
+         annotation:(id)annotation
+{
+    return [FBSession.activeSession handleOpenURL:url];
 }
 
 @end
