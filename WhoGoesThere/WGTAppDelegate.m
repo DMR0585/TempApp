@@ -172,10 +172,8 @@
 
 - (void)showLoginView
 {
-    NSLog(@"Showing LoginView");
     UINavigationController *nc = (UINavigationController *)self.window.rootViewController;
     UIViewController *topViewController = nc.topViewController;
-    NSLog(@"%@",topViewController);
     UIViewController *presentedViewController = [topViewController presentedViewController];
     
     // If the login screen is not already displayed, display it. If the login screen is
@@ -195,26 +193,31 @@
                       state:(FBSessionState) state
                       error:(NSError *)error
 {
+        
     switch (state) {
         case FBSessionStateOpen: {
-            UIViewController *topViewController = self.window.rootViewController.navigationController.topViewController;
+            UINavigationController *nc = (UINavigationController *) self.window.rootViewController;
+            UIViewController *topViewController = nc.navigationController.topViewController;
             if ([[topViewController presentedViewController] // *** instead of modalViewController
                  isKindOfClass:[WGTLoginViewController class]]) {
                 [topViewController dismissViewControllerAnimated:YES completion:nil]; // *** instead of dismissModalViewControllerAnimated
             }
+            NSLog(@"Open");
         }
             break;
-        case FBSessionStateClosed:
+        case FBSessionStateClosed: NSLog(@"Closed");
         case FBSessionStateClosedLoginFailed:
+            NSLog(@"Failed");
             // Once the user has logged in, we want them to
             // be looking at the root view.
-            [self.window.rootViewController.navigationController popToRootViewControllerAnimated:NO];
+            [(UINavigationController *)self.window.rootViewController popToRootViewControllerAnimated:NO];
             
             [FBSession.activeSession closeAndClearTokenInformation];
             
             [self showLoginView];
             break;
         default:
+            NSLog(@"default");
             break;
     }
     
@@ -231,6 +234,7 @@
 
 - (void)openSession
 {
+    NSLog(@"openSession called");
     [FBSession openActiveSessionWithReadPermissions:nil
                                        allowLoginUI:YES
                                   completionHandler:

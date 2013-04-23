@@ -8,6 +8,12 @@
 
 #import <UIKit/UIKit.h>
 
+
 @interface WGTLoginViewController : UIViewController
+
+@property (weak, nonatomic) IBOutlet UIButton *loginButton;
+@property (weak, nonatomic) IBOutlet UIButton *logoutButton;
+
 - (void)loginFailed;
+
 @end

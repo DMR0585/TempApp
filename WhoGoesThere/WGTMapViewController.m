@@ -6,8 +6,10 @@
 //  Copyright (c) 2013 Dan Reife. All rights reserved.
 //
 
+#import <FacebookSDK/FacebookSDK.h>
 #import "WGTMapViewController.h"
 #import "CyclicMutableArray.h"
+
 
 @interface WGTMapViewController ()
 
@@ -61,6 +63,12 @@ NSNumber *selectedPin;
     longPressRecognizer.delaysTouchesEnded = YES;
     [self.mapView addGestureRecognizer:longPressRecognizer];
     
+    //UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:nil];
+    //[self.mapView addGestureRecognizer:tapRecognizer];
+    
+    self.populateButton.action = @selector(populate);
+    self.populateButton.target = self;
+    
     // Set up the array of pins
     pins = [[CyclicMutableArray alloc] initWithCapacity:4];
     
@@ -100,16 +108,18 @@ NSNumber *selectedPin;
     }*/
     //if (began) {
         selectedPin = [NSNumber numberWithInt:[view.annotation.subtitle intValue] - 1];
-   // }
+        NSLog(@"didSelect pin (%@)",selectedPin);
+    //}
     
     //view.canShowCallout = YES;
-    NSLog(@"Selected pin (%@)",selectedPin);
+    //NSLog(@"Called didSelect, selected pin = %@",selectedPin);
+    
 }
 
 - (void)mapView:(MKMapView *)mapView didDeselectAnnotationView:(MKAnnotationView *)view {
     [self.mapView deselectAnnotation:view.annotation animated:NO];
     //view.canShowCallout = NO;
-    NSLog(@"Deselected pin (%@)",selectedPin);
+    NSLog(@"didDeselect pin (%@)",selectedPin);
     selectedPin = nil;
 }
 
@@ -185,23 +195,55 @@ NSNumber *selectedPin;
     // [self mapView:self.mapView didDeselectAnnotationView:view];
 }
 
+-(MKAnnotationView *)viewForPinWithCoordinate:(CLLocationCoordinate2D) coordinate {
+    for (MKPointAnnotation *pin in pins) {
+        if ((pin.coordinate.latitude == coordinate.latitude) && (pin.coordinate.longitude == coordinate.longitude)) {
+            return [self.mapView viewForAnnotation:pin];
+        }
+    }
+    return nil;
+}
+
 -(void)handleLongPress:(UIGestureRecognizer*)sender
 {
+    // Get the coordinate for the touch
+    CGPoint point = [sender locationInView:self.mapView];
+    CLLocationCoordinate2D coordinate = [self.mapView convertPoint:point toCoordinateFromView:self.mapView];
+    
     if (sender.state == UIGestureRecognizerStateBegan) {
-        
-        // Get the CGPoint for the touch
-        CGPoint point = [sender locationInView:self.mapView];
-        CLLocationCoordinate2D coordinate = [self.mapView convertPoint:point toCoordinateFromView:self.mapView];
-        
         // Add a pin if none were selected
         if (selectedPin == nil) {
             [self addPinToMapAtCoordinate:coordinate];
         }
-        else { // otherwise replace the selected pin
+        else { // replace the selected pin
             [self replacePinAtIndex:selectedPin
                      WithCoordinate:coordinate];
         }
     }
+    else if (sender.state == UIGestureRecognizerStateEnded) {
+        MKAnnotationView *view = [self viewForPinWithCoordinate:coordinate];
+        if (view != nil) {
+            //view.canShowCallout = NO;
+            [self mapView:self.mapView didDeselectAnnotationView:view];
+        }
+    }
+}
+
+-(void) populate {
+    NSLog(@"populate");
+    if (!self.friendPickerController) {
+        self.friendPickerController = [[FBFriendPickerViewController alloc]
+                                       initWithNibName:nil bundle:nil];
+        
+        // Set the friend picker delegate
+        self.friendPickerController.delegate = self;
+        
+        self.friendPickerController.title = @"Select friends";
+    }
+    
+    [self.friendPickerController loadData];
+    [self.navigationController pushViewController:self.friendPickerController
+                                         animated:true];
 }
 
 @end

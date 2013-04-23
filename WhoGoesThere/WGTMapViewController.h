@@ -11,8 +11,12 @@
 #import <MapKit/MapKit.h>
 #import "WGTAppDelegate.h"
 
-@interface WGTMapViewController : UIViewController <CLLocationManagerDelegate, MKMapViewDelegate>
+@interface WGTMapViewController : UIViewController <CLLocationManagerDelegate, MKMapViewDelegate, FBViewControllerDelegate>
 
 @property (weak, nonatomic) IBOutlet MKMapView *mapView;
+@property (weak, nonatomic) IBOutlet UIBarButtonItem *populateButton;
+@property (strong, nonatomic) FBFriendPickerViewController *friendPickerController;
+
+-(void)populate;
 
 @end

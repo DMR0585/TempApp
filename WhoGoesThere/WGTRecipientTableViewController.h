@@ -7,7 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <FacebookSDK/FacebookSDK.h>
 
-@interface WGTRecipientTableViewController : UITableViewController
+@interface WGTRecipientTableViewController : UITableViewController <UITableViewDataSource,
+UITableViewDelegate>
+
+
 
 @end

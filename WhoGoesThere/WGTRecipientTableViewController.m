@@ -32,6 +32,9 @@
  
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+
+    
+    // self.friendPickerController = nil;
 }
 
 - (void)didReceiveMemoryWarning
@@ -46,7 +49,7 @@
 {
 #warning Potentially incomplete method implementation.
     // Return the number of sections.
-    return 0;
+    return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -56,13 +59,66 @@
     return 0;
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+- (UITableViewCell *)tableView:(UITableView *)tableView
+         cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     static NSString *CellIdentifier = @"Cell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
     
-    // Configure the cell...
+    UITableViewCell *cell = (UITableViewCell*)[tableView
+                                               dequeueReusableCellWithIdentifier:CellIdentifier];
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
+                                      reuseIdentifier:CellIdentifier];
+        /*
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        
+        cell.textLabel.font = [UIFont systemFontOfSize:16];
+        cell.textLabel.backgroundColor = [UIColor colorWithWhite:0 alpha:0];
+        cell.textLabel.lineBreakMode = UILineBreakModeTailTruncation;
+        cell.textLabel.clipsToBounds = YES;
+        
+        cell.detailTextLabel.font = [UIFont systemFontOfSize:12];
+        cell.detailTextLabel.backgroundColor = [UIColor colorWithWhite:0 alpha:0];
+        cell.detailTextLabel.textColor = [UIColor colorWithRed:0.4
+                                                         green:0.6
+                                                          blue:0.8
+                                                         alpha:1];
+        cell.detailTextLabel.lineBreakMode = UILineBreakModeTailTruncation;
+        cell.detailTextLabel.clipsToBounds = YES;
+        */
+    }
     
+    /*
+    switch (indexPath.row) {
+        case 0:
+            cell.textLabel.text = @"What are you eating?";
+            cell.detailTextLabel.text = @"Select one";
+            cell.imageView.image = [UIImage imageNamed:@"action-eating.png"];
+            break;
+            
+        case 1:
+            cell.textLabel.text = @"Where are you?";
+            cell.detailTextLabel.text = @"Select one";
+            cell.imageView.image = [UIImage imageNamed:@"action-location.png"];
+            break;
+            
+        case 2:
+            cell.textLabel.text = @"With whom?";
+            cell.detailTextLabel.text = @"Select friends";
+            cell.imageView.image = [UIImage imageNamed:@"action-people.png"];
+            break;
+            
+        case 3:
+            cell.textLabel.text = @"Got a picture?";
+            cell.detailTextLabel.text = @"Take one";
+            cell.imageView.image = [UIImage imageNamed:@"action-photo.png"];
+            break;
+            
+        default:
+            break;
+    }
+    */
     return cell;
 }
 

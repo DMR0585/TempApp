@@ -6,6 +6,8 @@
 //  Copyright (c) 2013 Dan Reife. All rights reserved.
 //
 
+
+#import <FacebookSDK/FacebookSDK.h>
 #import "WGTLoginViewController.h"
 #import "WGTAppDelegate.h"
 
@@ -26,9 +28,15 @@
 
 - (void)viewDidLoad
 {
-    NSLog(@"LoginView loaded");
+    NSLog(@"View loaded");
+    if (FBSession.activeSession.state == FBSessionStateCreatedTokenLoaded) {
+        NSLog(@"state = createdtokenloaded");
+        [self dismissViewControllerAnimated:NO completion:^(void){}];
+    }
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
+    [self.loginButton addTarget:self action:@selector(performLogin:) forControlEvents:UIControlEventTouchUpInside];
+    [self.logoutButton addTarget:self action:@selector(logoutButtonWasPressed:) forControlEvents:UIControlEventTouchUpInside];
 }
 
 - (void)didReceiveMemoryWarning
@@ -39,8 +47,13 @@
 
 - (IBAction)performLogin:(id)sender
 {
+    NSLog(@"Perform login called");
     WGTAppDelegate* appDelegate = [UIApplication sharedApplication].delegate;
     [appDelegate openSession];
+}
+
+-(void)logoutButtonWasPressed:(id)sender {
+    [FBSession.activeSession closeAndClearTokenInformation];
 }
 
 - (void)loginFailed
