@@ -8,7 +8,6 @@
 
 #import <FacebookSDK/FacebookSDK.h>
 #import "WGTMapViewController.h"
-#import "CyclicMutableArray.h"
 
 
 @interface WGTMapViewController ()
@@ -19,6 +18,7 @@
 
 CyclicMutableArray *pins;
 NSNumber *selectedPin;
+BOOL selected;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -74,6 +74,7 @@ NSNumber *selectedPin;
     
     // None are selected
     selectedPin = nil;
+    selected = NO;
 }
 
 - (void)didReceiveMemoryWarning
@@ -98,28 +99,21 @@ NSNumber *selectedPin;
 
 #pragma mark - MKMapViewDelegate methods
 
-
-
 - (void)mapView:(MKMapView *)mapView didSelectAnnotationView:(MKAnnotationView *)view {
-    /*BOOL began = NO;
-    NSArray *grs = self.mapView.gestureRecognizers;
-    for (UIGestureRecognizer *gr in grs) {
-        if (gr.state == UIGestureRecognizerStateBegan) began = YES;
-    }*/
-    //if (began) {
-        selectedPin = [NSNumber numberWithInt:[view.annotation.subtitle intValue] - 1];
-        NSLog(@"didSelect pin (%@)",selectedPin);
-    //}
     
-    //view.canShowCallout = YES;
-    //NSLog(@"Called didSelect, selected pin = %@",selectedPin);
-    
+    selectedPin = [NSNumber numberWithInt:[view.annotation.subtitle intValue] - 1];
+    //NSLog(@"didSelect pin (%@)",selectedPin);
+    [self.mapView selectAnnotation:view.annotation animated:NO];
 }
 
 - (void)mapView:(MKMapView *)mapView didDeselectAnnotationView:(MKAnnotationView *)view {
-    [self.mapView deselectAnnotation:view.annotation animated:NO];
     //view.canShowCallout = NO;
-    NSLog(@"didDeselect pin (%@)",selectedPin);
+    [self performSelector:@selector(hidePinInView:) withObject:view afterDelay:0.01];
+}
+
+- (void) hidePinInView: (MKAnnotationView *) view {
+    [self.mapView deselectAnnotation:view.annotation animated:NO];
+    //NSLog(@"didDeselect pin (%@)",selectedPin);
     selectedPin = nil;
 }
 
@@ -132,17 +126,15 @@ NSNumber *selectedPin;
     [self.mapView setRegion:adjustedRegion animated:animated];
 }
 
-- (void)addPinToMapAtCoordinate:(CLLocationCoordinate2D) coordinate
-{
-    //NSLog(@"Adding pin");
+- (void)addPinToMapAtCoordinate:(CLLocationCoordinate2D) coordinate {
+    
     // Set up the new pin
     MKPointAnnotation *pin = [[MKPointAnnotation alloc] init];
     pin.coordinate = coordinate;
     pin.title = @"Pin";
     NSString *number;
     
-    // Adjust the number of each pin if you're going to replace
-    // the least recently added one
+    // Adjust the number of each pin if you're going to replace the least recently added one
     if ([pins count] == 4) {
         for (MKPointAnnotation *p in pins) {
             NSInteger n = [p.subtitle integerValue];
@@ -161,19 +153,12 @@ NSNumber *selectedPin;
     [pins addObject:pin];
     [self.mapView addAnnotation:pin];
     
-    MKAnnotationView *view = [self.mapView viewForAnnotation:pin];
-   // [view setSelected:NO];
-    //view.canShowCallout = NO;
-    //[self mapView:self.mapView didDeselectAnnotationView:view];
-    //[self mapView:self.mapView didDeselectAnnotationView:[self.mapView viewForAnnotation:pin]];
-    //[self.mapView deselectAnnotation:pin animated:NO];
-    NSLog(@"Added pin (%@) and selected pin (%@)",number,selectedPin);
+    //NSLog(@"Added pin (%@) and selected pin (%@)",number,selectedPin);
 }
 
 - (void)replacePinAtIndex:(NSNumber *)index
-           WithCoordinate:(CLLocationCoordinate2D) coordinate
-{
-    //NSLog(@"Replacing pin");
+           WithCoordinate:(CLLocationCoordinate2D) coordinate {
+    
     MKPointAnnotation *old = [pins objectAtIndex:[index unsignedIntegerValue]];
     MKPointAnnotation *replacement = [[MKPointAnnotation alloc] init];
     
@@ -184,15 +169,7 @@ NSNumber *selectedPin;
     [pins replaceObjectAtIndex:[index unsignedIntegerValue] withObject:replacement];
     [self.mapView removeAnnotation:old];
     [self.mapView addAnnotation:replacement];
-    NSLog(@"Replaced pin (%@) and selected pin (%@)",index,selectedPin);
-    //[self.mapView deselectAnnotation:replacement animated:NO];
-    
-    //for (NSObject<MKAnnotation> *annotation in [self.mapView selectedAnnotations]) {
-    //    [self.mapView deselectAnnotation:(id <MKAnnotation>)annotation animated:NO];
-    //}
-    //MKAnnotationView *view = [self.mapView viewForAnnotation:replacement];
-    //view.canShowCallout = NO;
-    // [self mapView:self.mapView didDeselectAnnotationView:view];
+    //NSLog(@"Replaced pin (%@) and selected pin (%@)",index,selectedPin);
 }
 
 -(MKAnnotationView *)viewForPinWithCoordinate:(CLLocationCoordinate2D) coordinate {
@@ -221,11 +198,9 @@ NSNumber *selectedPin;
         }
     }
     else if (sender.state == UIGestureRecognizerStateEnded) {
+        // Deselect it
         MKAnnotationView *view = [self viewForPinWithCoordinate:coordinate];
-        if (view != nil) {
-            //view.canShowCallout = NO;
-            [self mapView:self.mapView didDeselectAnnotationView:view];
-        }
+        [self mapView:self.mapView didDeselectAnnotationView:view];
     }
 }
 
@@ -235,8 +210,10 @@ NSNumber *selectedPin;
         self.friendPickerController = [[FBFriendPickerViewController alloc]
                                        initWithNibName:nil bundle:nil];
         
+        WGTRecipientTableViewController *recipients = [[WGTRecipientTableViewController alloc] init];
+        
         // Set the friend picker delegate
-        self.friendPickerController.delegate = self;
+        self.friendPickerController.delegate = recipients;
         
         self.friendPickerController.title = @"Select friends";
     }

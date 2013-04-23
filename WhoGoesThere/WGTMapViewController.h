@@ -10,6 +10,9 @@
 #import <CoreLocation/CoreLocation.h>
 #import <MapKit/MapKit.h>
 #import "WGTAppDelegate.h"
+#import "WGTRecipientTableViewController.h"
+#import "CyclicMutableArray.h"
+
 
 @interface WGTMapViewController : UIViewController <CLLocationManagerDelegate, MKMapViewDelegate, FBViewControllerDelegate>
 

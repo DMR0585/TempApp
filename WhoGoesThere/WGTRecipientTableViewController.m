@@ -174,4 +174,22 @@
      */
 }
 
+#pragma mark - FBFriendPickerDelegate methods
+
+- (void)friendPickerViewController:(FBFriendPickerViewController *)friendPicker handleError:(NSError *)error {
+    
+}
+
+- (BOOL)friendPickerViewController:(FBFriendPickerViewController *)friendPicker shouldIncludeUser:(id <FBGraphUser>)user {
+    return YES;
+}
+
+- (void)friendPickerViewControllerDataDidChange:(FBFriendPickerViewController *)friendPicker {
+    
+}
+
+- (void)friendPickerViewControllerSelectionDidChange:(FBFriendPickerViewController *)friendPicker {
+    
+}
+
 @end
