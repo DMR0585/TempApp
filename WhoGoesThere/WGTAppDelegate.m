@@ -31,8 +31,50 @@
     
     // Override point for customization after application launch.
     
- 
     
+    // Set up the Parse backend and log in
+    [Parse setApplicationId: @"wyorofSE4rd43Upn1BBrW9tWeMQJB5vpr1Kf5ro9"
+                  clientKey: @"o3ej55V3ph8Myom4VZjSX5oq8NtN3pzgcChFmp2t"];
+    [PFAnalytics trackAppOpenedWithLaunchOptions: launchOptions];
+    [PFFacebookUtils initializeFacebook];
+    
+    //if ([PFUser currentUser] == nil) {
+       // [self logIn];
+    //}
+    
+    //PFUser *user = [PFUser currentUser];
+    
+    //NSLog(@"Username = %@, pw = %@",user.username, user.password);
+     /*
+    [user removeObject:@"Dan" forKey:@"first_name"];
+    [user removeObject:@"Reife" forKey:@"last_name"];
+    [user removeObject:@"Dan" forKey:@"first_name"];
+    [user removeObject:@"Reife" forKey:@"last_name"];
+    [user removeObject:@"Dan" forKey:@"first_name"];
+    [user removeObject:@"Reife" forKey:@"last_name"];
+     
+    
+    [user addObject:@"Dan" forKey:@"first_name"];
+    [user addObject:@"Reife" forKey:@"last_name"];
+    [user save];
+    [self updateUserInfoFromFacebook:user];
+    [user refresh];
+      */
+    //NSString *firstName = [user objectForKey:@"first_name"];
+    //NSString *lastName = [user objectForKey:@"last_name"];
+    //NSLog(@"Username = %@, First name: %@, Last name: %@",user.username, firstName, lastName);
+    
+    //NSLog(@"In DFLWO, after login, user = %@",[PFUser currentUser]);
+    
+    // Set up the location manager
+    if (self.locationManager == nil) {
+        self.locationManager = [[CLLocationManager alloc] init];
+    }
+    // Update location if possible, otherwise request user to allow location updates
+    //[self.locationManager startUpdatingLocation];
+    // Assign the locationManager's delegate and other settings
+    [self.locationManager setDelegate:self];
+    self.locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
     return YES;
 }
 							
@@ -56,7 +98,14 @@
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    if ([PFUser currentUser] == nil) {
+        //[self logIn];
+    }
+    //[self.locationManager startUpdatingLocation];
     
+    
+    /* From before Parse was integrated, will delete*/
+    /*
     // See if we have a valid token for the current state.
     if (FBSession.activeSession.state == FBSessionStateCreatedTokenLoaded) {
         // Yes, so just open the session (this won't display any UX).
@@ -65,6 +114,7 @@
         // No, display the login page.
         [self showLoginView];
     }
+     */
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
@@ -72,6 +122,98 @@
     // Saves changes in the application's managed object context before the application terminates.
     [self saveContext];
 }
+
+
+- (void)locationManager:(CLLocationManager *)manager
+     didUpdateLocations:(NSArray *)locations
+{
+    // When location is updated, add a pin and move the view.
+    CLLocation *location = [locations lastObject];
+    
+    NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
+    [dictionary setObject:[NSNumber numberWithDouble:location.coordinate.latitude] forKey:@"latitude"];
+    [dictionary setObject:[NSNumber numberWithDouble:location.coordinate.longitude] forKey:@"longitude"];
+    
+    PFUser *user = [PFUser currentUser];
+    if ([user objectForKey:@"location"] == nil) {
+        [user addObject:dictionary forKey:@"location"];
+    }
+    else {
+        [user setObject:dictionary forKey:@"location"];
+    }
+    
+    
+    //NSLog(@"Updated user's location to %@",[[PFUser currentUser] objectForKey:@"location"]);
+}
+
+/*
+- (void) updateUserInfoFromFacebook:(PFUser *) user {
+    
+    
+    // Create request for user's Facebook data
+    FBRequest *request = [FBRequest requestForMe];
+    
+    // Send request to Facebook
+    [request startWithCompletionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+        if (!error) {
+            // result is a dictionary with the user's Facebook data
+            NSDictionary *data = (NSDictionary *)result;
+            
+            NSString *username = data[@"username"];
+            NSString *firstname = data[@"first_name"];
+            NSString *lastname = data[@"last_name"];
+            NSString *email = data[@"email"];
+            
+           // NSLog(@"from FBRequest: username = %@, first = %@, last = %@, email = %@",username, firstname, lastname, email);
+            
+            if (username != nil) {
+                NSLog(@"About to set %@ (username)",username);
+                user.username = username;
+                NSLog(@"Set %@ (username)",user.username);
+            }
+            if (email != nil) {
+                //NSLog(@"set email");
+                user.email = email;
+            }
+            if (firstname != nil && [user objectForKey:@"first_name"] == nil) {
+                NSLog(@"About to add %@ (first name)",firstname);
+                [user addObject:firstname forKey:@"first_name"];
+                NSString *s = [user objectForKey:@"first_name"];
+                NSLog(@"Added %@ (first name)",s);
+            }
+            if (lastname != nil && [user objectForKey:@"last_name"] == nil) {
+                NSLog(@"About to add %@ (last name)",lastname);
+                [user addObject:lastname forKey:@"last_name"];
+                NSString *s = [user objectForKey:@"last_name"];
+                NSLog(@"Added %@ (last name)",s);
+            }
+        }
+        NSString *f = [[PFUser currentUser] objectForKey:@"first_name"];
+        NSString *l = [[PFUser currentUser] objectForKey:@"last_name"];
+        NSLog(@"Before save, username = %@, first = %@, last = %@",[PFUser currentUser].username,f,l);
+        if (![user save]) {
+            NSLog(@"DIDN'T SAVE");
+        }
+        else NSLog(@"saved!");
+        f = [[PFUser currentUser] objectForKey:@"first_name"];
+        l = [[PFUser currentUser] objectForKey:@"last_name"];
+        NSLog(@"After save, before refresh, username = %@, first = %@, last = %@",[PFUser currentUser].username,f,l);
+        [user refresh];
+        f = [[PFUser currentUser] objectForKey:@"first_name"];
+        l = [[PFUser currentUser] objectForKey:@"last_name"];
+        NSLog(@"After refresh, username = %@, first = %@, last = %@",[PFUser currentUser].username,f,l);
+    }];
+    
+    NSString *firstname = [user objectForKey:@"first_name"];
+    NSString *lastname = [user objectForKey:@"last_name"];
+    
+    NSLog(@"from user: username = %@, first = %@, last = %@",user.username, firstname, lastname);
+    
+    NSString *fname = [[PFUser currentUser] objectForKey:@"first_name"];
+    NSString *lname = [[PFUser currentUser] objectForKey:@"last_name"];
+    NSLog(@"from user: username = %@, first = %@, last = %@",[PFUser currentUser].username, firstname, lastname);
+}
+*/
 
 - (void)saveContext
 {
@@ -168,88 +310,216 @@
     return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
 }
 
-# pragma mark - Facebook Login
-
-- (void)showLoginView
-{
-    UINavigationController *nc = (UINavigationController *)self.window.rootViewController;
-    UIViewController *topViewController = nc.topViewController;
-    UIViewController *presentedViewController = [topViewController presentedViewController];
+-(void)logIn{
+    NSLog(@"logIn");
     
-    // If the login screen is not already displayed, display it. If the login screen is
-    // displayed, then getting back here means the login in progress did not successfully
-    // complete. In that case, notify the login view so it can update its UI appropriately.
-    if (![presentedViewController isKindOfClass:[WGTLoginViewController class]]) {
-        UIStoryboard *sb = self.window.rootViewController.storyboard;
-        WGTLoginViewController* loginViewController = (WGTLoginViewController *) [sb instantiateViewControllerWithIdentifier:@"FBLoginVC"];
-        [topViewController presentViewController:loginViewController animated:NO completion:nil];
-    } else {
-        WGTLoginViewController* loginViewController = (WGTLoginViewController*)presentedViewController;
-        [loginViewController loginFailed];
-    }
-}
-
-- (void)sessionStateChanged:(FBSession *)session
-                      state:(FBSessionState) state
-                      error:(NSError *)error
-{
+    UINavigationController *nc = (UINavigationController *) self.window.rootViewController;
+    UIViewController *topViewController = nc.navigationController.topViewController;
+    
+    // The permissions requested from the user
+    NSArray *permissionsArray = @[@"user_about_me", @"user_relationships", @"user_birthday", @"user_location"];
+    
+    // Login PFUser using Facebook
+    [PFFacebookUtils logInWithPermissions:permissionsArray block:^(PFUser *user, NSError *error) {
+        //[_activityIndicator stopAnimating]; // Hide loading indicator
         
-    switch (state) {
-        case FBSessionStateOpen: {
-            UINavigationController *nc = (UINavigationController *) self.window.rootViewController;
-            UIViewController *topViewController = nc.navigationController.topViewController;
-            if ([[topViewController presentedViewController] // *** instead of modalViewController
-                 isKindOfClass:[WGTLoginViewController class]]) {
+        if (!user) {
+            NSLog(@"login failed (!user)");
+            if (!error) {
+            NSLog(@"Uh oh. The user cancelled the Facebook login.");
+            } else {
+            NSLog(@"Uh oh. An error occurred: %@", error);
+            }
+        } else {
+            
+            if (user.isNew) {
+                NSLog(@"User with facebook signed up and logged in!");
+                
+            } else {
+                NSLog(@"User with facebook logged in!");
+                
+            }
+            
+            
+            if ([[topViewController presentedViewController] isKindOfClass:[WGTLoginViewController class]]) {
                 [topViewController dismissViewControllerAnimated:YES completion:nil]; // *** instead of dismissModalViewControllerAnimated
             }
-            NSLog(@"Open");
         }
-            break;
-        case FBSessionStateClosed: NSLog(@"Closed");
-        case FBSessionStateClosedLoginFailed:
-            NSLog(@"Failed");
-            // Once the user has logged in, we want them to
-            // be looking at the root view.
-            [(UINavigationController *)self.window.rootViewController popToRootViewControllerAnimated:NO];
-            
-            [FBSession.activeSession closeAndClearTokenInformation];
-            
-            [self showLoginView];
-            break;
-        default:
-            NSLog(@"default");
-            break;
-    }
+    }];
+    PFUser *user = [PFUser currentUser];
     
-    if (error) {
-        UIAlertView *alertView = [[UIAlertView alloc]
-                                  initWithTitle:@"Error"
-                                  message:error.localizedDescription
-                                  delegate:nil
-                                  cancelButtonTitle:@"OK"
-                                  otherButtonTitles:nil];
-        [alertView show];
-    }
+    NSLog(@"Username = %@, pw = %@",user.username, user.password);
+    
 }
 
-- (void)openSession
-{
-    NSLog(@"openSession called");
-    [FBSession openActiveSessionWithReadPermissions:nil
-                                       allowLoginUI:YES
-                                  completionHandler:
-     ^(FBSession *session,
-       FBSessionState state, NSError *error) {
-         [self sessionStateChanged:session state:state error:error];
-     }];
-}
 
-- (BOOL)application:(UIApplication *)application
-            openURL:(NSURL *)url
-  sourceApplication:(NSString *)sourceApplication
-         annotation:(id)annotation
-{
-    return [FBSession.activeSession handleOpenURL:url];
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url
+  sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
+    return [PFFacebookUtils handleOpenURL:url];
 }
 
 @end
+
+
+// ******* UNUSED METHODS **********
+/*
+
+ - (void)openSession {
+ NSLog(@"openSession called");
+ 
+ // Set permissions required from the facebook user account
+ NSArray *permissionsArray = @[@"user_about_me", @"user_relationships", @"user_birthday", @"user_location"];
+ 
+ UINavigationController *nc = (UINavigationController *) self.window.rootViewController;
+ UIViewController *topViewController = nc.navigationController.topViewController;
+ 
+ NSLog(@"%@",[PFUser currentUser].username);
+ if ([PFUser currentUser].username == nil) {
+ [PFFacebookUtils logInWithPermissions:permissionsArray block:^(PFUser *user, NSError *error) {
+ //[_activityIndicator stopAnimating]; // Hide loading indicator
+ if (!user) {
+ NSLog(@"Login failed (!user)");
+ if (!error) {
+ NSLog(@"Uh oh. The user cancelled the Facebook login.");
+ UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Log In Error" message:@"Uh oh. The user cancelled the Facebook login." delegate:nil cancelButtonTitle:nil otherButtonTitles:@"Dismiss", nil];
+ [alert show];
+ } else {
+ NSLog(@"Uh oh. An error occurred: %@", error);
+ UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Log In Error" message:[error description] delegate:nil cancelButtonTitle:nil otherButtonTitles:@"Dismiss", nil];
+ [alert show];
+ }
+ } else if (user.isNew) {
+ NSLog(@"User with facebook signed up and logged in!");
+ if ([[topViewController presentedViewController] isKindOfClass:[WGTLoginViewController class]]) {
+ [topViewController dismissViewControllerAnimated:YES completion:nil]; // *** instead of dismissModalViewControllerAnimated
+ }
+ } else {
+ NSLog(@"User with facebook logged in!");
+ 
+ if ([[topViewController presentedViewController] // *** instead of modalViewController
+ isKindOfClass:[WGTLoginViewController class]]) {
+ [topViewController dismissViewControllerAnimated:YES completion:nil]; // *** instead of dismissModalViewControllerAnimated
+ }
+ }
+ }];
+ }
+ 
+ if (![PFUser currentUser]) {
+ NSLog(@"No current user");
+ [[FBSession activeSession] closeAndClearTokenInformation];
+ // Login PFUser using facebook
+ 
+ 
+ [PFFacebookUtils logInWithPermissions:permissionsArray block:^(PFUser *user, NSError *error) {
+ //[_activityIndicator stopAnimating]; // Hide loading indicator
+ 
+ if (!user) {
+ if (!error) {
+ NSLog(@"Uh oh. The user cancelled the Facebook login.");
+ UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Log In Error" message:@"Uh oh. The user cancelled the Facebook login." delegate:nil cancelButtonTitle:nil otherButtonTitles:@"Dismiss", nil];
+ [alert show];
+ } else {
+ NSLog(@"Uh oh. An error occurred: %@", error);
+ UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Log In Error" message:[error description] delegate:nil cancelButtonTitle:nil otherButtonTitles:@"Dismiss", nil];
+ [alert show];
+ }
+ } else if (user.isNew) {
+ NSLog(@"User with facebook signed up and logged in!");
+ if ([[topViewController presentedViewController] isKindOfClass:[WGTLoginViewController class]]) {
+ [topViewController dismissViewControllerAnimated:YES completion:nil]; // *** instead of dismissModalViewControllerAnimated
+ }
+ } else {
+ NSLog(@"User with facebook logged in!");
+ 
+ if ([[topViewController presentedViewController] // *** instead of modalViewController
+ isKindOfClass:[WGTLoginViewController class]]) {
+ [topViewController dismissViewControllerAnimated:YES completion:nil]; // *** instead of dismissModalViewControllerAnimated
+ }
+ }
+ }];
+ }
+ 
+ //[_activityIndicator startAnimating]; // Show loading indicator until login is finished
+ 
+//Before using Parse
+
+ [FBSession openActiveSessionWithReadPermissions:nil
+ allowLoginUI:YES
+ completionHandler:
+ ^(FBSession *session,
+ FBSessionState state, NSError *error) {
+ [self sessionStateChanged:session state:state error:error];
+ }];
+}
+
+
+ 
+ 
+ 
+ 
+ 
+ # pragma mark - Facebook Login
+ 
+ - (void)showLoginView
+ {
+ UINavigationController *nc = (UINavigationController *)self.window.rootViewController;
+ UIViewController *topViewController = nc.topViewController;
+ UIViewController *presentedViewController = [topViewController presentedViewController];
+ 
+ // If the login screen is not already displayed, display it. If the login screen is
+ // displayed, then getting back here means the login in progress did not successfully
+ // complete. In that case, notify the login view so it can update its UI appropriately.
+ if (![presentedViewController isKindOfClass:[WGTLoginViewController class]]) {
+ UIStoryboard *sb = self.window.rootViewController.storyboard;
+ WGTLoginViewController* loginViewController = (WGTLoginViewController *) [sb instantiateViewControllerWithIdentifier:@"FBLoginVC"];
+ [topViewController presentViewController:loginViewController animated:NO completion:nil];
+ } else {
+ WGTLoginViewController* loginViewController = (WGTLoginViewController*)presentedViewController;
+ [loginViewController loginFailed];
+ }
+ }
+ 
+ - (void)sessionStateChanged:(FBSession *)session
+ state:(FBSessionState) state
+ error:(NSError *)error
+ {
+ 
+ switch (state) {
+ case FBSessionStateOpen: {
+ UINavigationController *nc = (UINavigationController *) self.window.rootViewController;
+ UIViewController *topViewController = nc.navigationController.topViewController;
+ if ([[topViewController presentedViewController] // *** instead of modalViewController
+ isKindOfClass:[WGTLoginViewController class]]) {
+ [topViewController dismissViewControllerAnimated:YES completion:nil]; // *** instead of dismissModalViewControllerAnimated
+ }
+ NSLog(@"Open");
+ }
+ break;
+ case FBSessionStateClosed: NSLog(@"Closed");
+ case FBSessionStateClosedLoginFailed:
+ NSLog(@"Failed");
+ // Once the user has logged in, we want them to
+ // be looking at the root view.
+ [(UINavigationController *)self.window.rootViewController popToRootViewControllerAnimated:NO];
+ 
+ [FBSession.activeSession closeAndClearTokenInformation];
+ 
+ [self showLoginView];
+ break;
+ default:
+ NSLog(@"default");
+ break;
+ }
+ 
+ if (error) {
+ UIAlertView *alertView = [[UIAlertView alloc]
+ initWithTitle:@"Error"
+ message:error.localizedDescription
+ delegate:nil
+ cancelButtonTitle:@"OK"
+ otherButtonTitles:nil];
+ [alertView show];
+ }
+ }
+
+*/

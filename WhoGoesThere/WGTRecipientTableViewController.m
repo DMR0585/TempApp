@@ -174,6 +174,7 @@
      */
 }
 
+/*
 #pragma mark - FBFriendPickerDelegate methods
 
 - (void)friendPickerViewController:(FBFriendPickerViewController *)friendPicker handleError:(NSError *)error {
@@ -191,5 +192,5 @@
 - (void)friendPickerViewControllerSelectionDidChange:(FBFriendPickerViewController *)friendPicker {
     
 }
-
+*/
 @end

@@ -66,8 +66,8 @@ BOOL selected;
     //UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:nil];
     //[self.mapView addGestureRecognizer:tapRecognizer];
     
-    self.populateButton.action = @selector(populate);
-    self.populateButton.target = self;
+    self.composeButton.action = @selector(populateRecipients);
+    self.composeButton.target = self;
     
     // Set up the array of pins
     pins = [[CyclicMutableArray alloc] initWithCapacity:4];
@@ -181,6 +181,17 @@ BOOL selected;
     return nil;
 }
 
+- (UserArea *) getArea {
+    NSMutableArray *cs = [[NSMutableArray alloc] init];
+    NSArray *pins = [self.mapView annotations];
+    for (MKPointAnnotation *p in pins) {
+        CLLocation *l = [[CLLocation alloc] initWithLatitude:p.coordinate.latitude longitude:p.coordinate.longitude];
+        [cs addObject:l];
+    }
+    UserArea *area = [[UserArea alloc] initWithCoordinates:cs];
+    return area;
+}
+
 -(void)handleLongPress:(UIGestureRecognizer*)sender
 {
     // Get the coordinate for the touch
@@ -204,23 +215,79 @@ BOOL selected;
     }
 }
 
--(void) populate {
+#pragma mark - FBFriendPickerDelegate methods
+
+- (void)friendPickerViewController:(FBFriendPickerViewController *)friendPicker handleError:(NSError *)error {
+    
+}
+
+- (BOOL)friendPickerViewController:(FBFriendPickerViewController *)friendPicker shouldIncludeUser:(id <FBGraphUser>)user {
+    UserArea *area = [self getArea];
+    PFQuery *query = [PFUser query];
+    NSArray *users = [query findObjects];
+    for (PFUser *parseUser in users) {
+        if ([area containsUser:parseUser] && [user.id isEqualToString:[parseUser objectForKey:@"FBid"]]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)friendPickerViewControllerDataDidChange:(FBFriendPickerViewController *)friendPicker {
+    
+}
+
+- (void)friendPickerViewControllerSelectionDidChange:(FBFriendPickerViewController *)friendPicker {
+    
+}
+
+- (void)facebookViewControllerCancelWasPressed:(id)sender
+{
+    NSLog(@"Friend selection cancelled.");
+    [self dismissModalViewControllerAnimated:YES];
+    
+}
+
+- (void)facebookViewControllerDoneWasPressed:(id)sender
+{
+    FBFriendPickerViewController *fpc = (FBFriendPickerViewController *)sender;
+    [self composeMessageWithRecipients:fpc.selection];
+    
+    /*
+    for (id <FBGraphUser> user in fpc.selection) {
+        NSLog(@"Friend selected: %@", user.name);
+    }
+    [self dismissModalViewControllerAnimated:YES];
+     */
+}
+
+
+
+-(IBAction)compose:(UIStoryboardSegue *)segue {
+    
+}
+
+
+-(void)populateRecipients {
     NSLog(@"populate");
     if (!self.friendPickerController) {
         self.friendPickerController = [[FBFriendPickerViewController alloc]
                                        initWithNibName:nil bundle:nil];
         
-        WGTRecipientTableViewController *recipients = [[WGTRecipientTableViewController alloc] init];
-        
         // Set the friend picker delegate
-        self.friendPickerController.delegate = recipients;
-        
+        self.friendPickerController.delegate = self;
         self.friendPickerController.title = @"Select friends";
     }
     
     [self.friendPickerController loadData];
-    [self.navigationController pushViewController:self.friendPickerController
-                                         animated:true];
+    [self presentViewController:self.friendPickerController animated:YES completion:nil];
+}
+
+-(void)composeMessageWithRecipients:(NSArray *)users {
+    
+    
+    MFMessageComposeViewController *message = [[MFMessageComposeViewController alloc] initWithRootViewController:[[UIApplication sharedApplication] delegate]];
+    
 }
 
 @end

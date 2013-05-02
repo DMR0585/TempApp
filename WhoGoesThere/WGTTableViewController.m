@@ -37,6 +37,7 @@
  
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+    //NSLog(@"User = %@",[PFUser currentUser]);
 }
 
 - (void)didReceiveMemoryWarning
@@ -261,6 +262,12 @@
     NSManagedObject *object = [self.fetchedResultsController objectAtIndexPath:indexPath];
     cell.textLabel.text = [[object valueForKey:@"timeStamp"] description];
 }
+
+-(IBAction)cancel:(UIStoryboardSegue *)segue {
+    // If cancel is pushed, do nothing other than unwind
+}
+
+
 
 @end
 

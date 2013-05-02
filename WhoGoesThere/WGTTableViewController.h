@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import <CoreData/CoreData.h>
+#import "WGTMapViewController.h"
 
 @interface WGTTableViewController : UITableViewController <NSFetchedResultsControllerDelegate>
 {
@@ -17,5 +18,9 @@
 
 @property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
 @property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
+
+
+-(IBAction)logout;
+-(IBAction)cancel:(UIStoryboardSegue *)segue;
 
 @end

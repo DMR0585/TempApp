@@ -12,6 +12,7 @@
 @interface WGTRecipientTableViewController : UITableViewController <UITableViewDataSource,
 UITableViewDelegate, FBFriendPickerDelegate>
 
+/*
 - (void)friendPickerViewController:(FBFriendPickerViewController *)friendPicker handleError:(NSError *)error;
 
 - (BOOL)friendPickerViewController:(FBFriendPickerViewController *)friendPicker shouldIncludeUser:(id <FBGraphUser>)user;
@@ -19,5 +20,6 @@ UITableViewDelegate, FBFriendPickerDelegate>
 - (void)friendPickerViewControllerDataDidChange:(FBFriendPickerViewController *)friendPicker;
 
 - (void)friendPickerViewControllerSelectionDidChange:(FBFriendPickerViewController *)friendPicker;
-
+*/
+ 
 @end
